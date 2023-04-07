@@ -10,7 +10,11 @@ from config import conf
 from common.log import logger
 import openai
 import openai.error
+import pinecone
+from langchain.vectorstores import Pinecone
 import time
+from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain import OpenAI, VectorDBQA
 
 user_session = dict()
 
@@ -26,6 +30,40 @@ class OpenAIBot(Bot, OpenAIImage):
             openai.proxy = proxy
 
         self.sessions = SessionManager(OpenAISession, model= conf().get("model") or "text-davinci-003")
+
+        
+
+        model_name = 'text-embedding-ada-002'
+
+        embed = OpenAIEmbeddings(
+            document_model_name=model_name,
+            query_model_name=model_name,
+            openai_api_key=conf().get('open_ai_api_key'),
+        )
+
+        #init pinecone vectorstore
+        pinecone.init(
+            api_key=conf().get('pinecone_api_key'),
+            environment=conf().get('pinecone_env')
+        )
+
+        # switch back to normal index for langchain
+        index = pinecone.Index(conf().get('pinecone_db_name'))
+
+        vectorstore = Pinecone(
+            index, embed.embed_query, 'text'
+        )
+        llm = OpenAI(
+            openai_api_key=conf().get('open_ai_api_key'),
+            model_name= conf().get("model") or "text-davinci-003",
+            temperature=5.0
+        )
+
+        self.qa = VectorDBQA.from_chain_type(
+            llm=llm,
+            chain_type="stuff",
+            vectorstore=vectorstore
+        )
 
     def reply(self, query, context=None):
         # acquire reply content
@@ -65,6 +103,7 @@ class OpenAIBot(Bot, OpenAIImage):
 
     def reply_text(self, query, session_id, retry_count=0):
         try:
+            
             response = openai.Completion.create(
                 model= conf().get("model") or "text-davinci-003",  # 对话模型的名称
                 prompt=query,
@@ -75,7 +114,8 @@ class OpenAIBot(Bot, OpenAIImage):
                 presence_penalty=0.0,  # [-2,2]之间，该值越大则更倾向于产生不同的内容
                 stop=["\n\n\n"]
             )
-            res_content = response.choices[0]['text'].strip().replace('<|endoftext|>', '')
+            #res_content = response.choices[0]['text'].strip().replace('<|endoftext|>', '')
+            res_content = self.qa.run(query+'用中文回答')
             total_tokens = response["usage"]["total_tokens"]
             completion_tokens = response["usage"]["completion_tokens"]
             logger.info("[OPEN_AI] reply={}".format(res_content))

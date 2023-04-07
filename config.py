@@ -15,6 +15,11 @@ available_setting = {
     "model": "gpt-3.5-turbo",
     "use_azure_chatgpt": False,  # 是否使用azure的chatgpt
 
+    # pinecone 配置
+    "pinecone_api_key":"",
+    "pinecone_env":"",
+    "pinecone_db_name":"",
+
     # Bot触发配置
     "single_chat_prefix": ["bot", "@bot"],  # 私聊时文本需要包含该前缀才能触发机器人回复
     "single_chat_reply_prefix": "[bot] ",  # 私聊时自动回复的前缀，用于区分真人
@@ -29,7 +34,7 @@ available_setting = {
 
     # chatgpt会话参数
     "expires_in_seconds": 3600,  # 无操作会话的过期时间
-    "character_desc": "你是ChatGPT, 一个由OpenAI训练的大型语言模型, 你旨在回答并解决人们的任何问题，并且可以使用多种语言与人交流。",  # 人格描述
+    "character_desc": "你是超市的导购员，请如实告知用户你有没有某样产品，如果有的话请介绍一下这个产品",  # 人格描述
     "conversation_max_tokens": 1000,  # 支持上下文记忆的最多字符数
 
     # chatgpt限流配置
