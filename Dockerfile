@@ -13,7 +13,7 @@ RUN apk add --no-cache bash ffmpeg espeak \
     && cd ${BUILD_PREFIX} \
     && cp config-template.json config.json \
     && /usr/local/bin/python -m pip install --no-cache --upgrade pip \
-    && pip install --no-cache -r requirements.txt
+    && pip3 install --no-cache -r requirements.txt
 
 WORKDIR ${BUILD_PREFIX}
 
